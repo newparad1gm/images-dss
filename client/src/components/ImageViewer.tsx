@@ -12,7 +12,7 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
     useEffect(() => {
         const getImage = async () => {
             if (imageKey) {
-                const response = await fetch(`http://localhost:8080/api/get/${bucketName}/${imageKey}`, {
+                const response = await fetch(`api/get/${bucketName}/${imageKey}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',

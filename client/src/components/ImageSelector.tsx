@@ -23,7 +23,7 @@ export const ImageSelector = (props: ImageSelectorProps): JSX.Element | null => 
 
     useEffect(() => {
         const getObjects = async () => {
-            const response = await fetch(`http://localhost:8080/api/objects/${bucketName}`, {
+            const response = await fetch(`api/objects/${bucketName}`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',

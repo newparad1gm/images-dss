@@ -19,7 +19,7 @@ export const Upload = (props: UploadProps): JSX.Element | null => {
             const data = new FormData();
             data.append('object', selectedFile);
 
-            return fetch(`http://localhost:8080/api/upload/${bucketName}`, {
+            return fetch(`api/upload/${bucketName}`, {
                 method: 'POST',
                 body: data
             });

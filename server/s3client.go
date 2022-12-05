@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"mime/multipart"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,15 +34,9 @@ func (s S3Client) GetObjects(bucket string) ([]types.Object, error) {
 		Bucket: aws.String(bucket),
 	})
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	return output.Contents, nil
-	/*var objects []string
-	for _, object := range output.Contents {
-		objects = append(objects, aws.ToString(object.Key))
-	}
-	return objects, nil*/
 }
 
 func (s S3Client) PutObject(bucket string, fileName string, fileSize int64, file multipart.File) error {
@@ -54,7 +47,6 @@ func (s S3Client) PutObject(bucket string, fileName string, fileSize int64, file
 		ContentLength: fileSize,
 	})
 	if err != nil {
-		log.Fatal(err)
 		return err
 	}
 	return nil
@@ -66,7 +58,6 @@ func (s S3Client) GetObject(bucket string, key string) (*s3.GetObjectOutput, err
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	return object, nil
@@ -87,7 +78,6 @@ func CreateS3Client(accessKey string, secretAccess string, envRegion string, aws
 		config.WithEndpointResolverWithOptions(customResolver),
 	)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 

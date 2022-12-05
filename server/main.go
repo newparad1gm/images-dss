@@ -23,9 +23,8 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.LoadHTMLGlob("templates/*")
 	router.Use(cors.Default())
-	router.Use(static.Serve("/", static.LocalFile("./views", true)))
+	router.Use(static.Serve("/", static.LocalFile("./web", true)))
 	SetupRouter(router)
 	router.Run()
 }
