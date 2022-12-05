@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ReactPainter } from 'react-painter';
-import { v4 as uuidv4 } from 'uuid';
+import { Utils } from '../Utils';
 
 interface ImageViewerProps {
     bucketName: string;
@@ -27,8 +27,8 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
                     },
                 });
                 const json = await response.json();
-                const bytes = base64ToArrayBuffer(json.buffer);
-                const file = bufferToFile(imageKey, bytes, json.contentType);
+                const bytes = Utils.base64ToArrayBuffer(json.buffer);
+                const file = Utils.bufferToFile(Utils.newFileName(imageKey), bytes, json.contentType);
                 setImage(file);
                 setFileName(file.name);
             }
@@ -37,34 +37,16 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
     }, [imageKey]);
 
     useEffect(() => {
+        if (image) {
+            setFileName(image.name);
+        }
         setSaved(false);
     }, [image]);
-
-    const base64ToArrayBuffer = (base64: string): Uint8Array => {
-        const binaryString = window.atob(base64);
-        const binaryLen = binaryString.length;
-        const bytes = new Uint8Array(binaryLen);
-        for (let i = 0; i < binaryLen; i++) {
-            const ascii = binaryString.charCodeAt(i);
-            bytes[i] = ascii;
-        }
-        return bytes;
-    }
-
-    const bufferToFile = (fileName: string, bytes: Uint8Array, contentType: string): File => {
-        return blobToFile(fileName, new Blob([bytes], {type: contentType}));
-    }
-
-    const blobToFile = (fileName: string, blob: Blob): File => {
-        const newFileName = fileName.replace(/\.[^/.]+$/, "");
-        const file = new File([blob], `${newFileName}-${uuidv4()}`);
-        return file;
-    }
 
     const saveImage = async (blob: Blob) => {
         if (image) {
             const newFileName = fileName ? fileName : image.name;
-            const file = blobToFile(newFileName, blob);
+            const file = Utils.blobToFile(newFileName, blob);
             const data = new FormData();
             data.append('object', file);
             data.append('key', newFileName);
