@@ -14,6 +14,7 @@ interface ImageViewerProps {
 export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
     const { bucketName, imageKey, image, setImage, setRefreshObjects, userName } = props;
     const [ saved, setSaved ] = useState<boolean>(false);
+    const [ fileName, setFileName ] = useState<string>("");
 
     useEffect(() => {
         const getImage = async () => {
@@ -27,7 +28,9 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
                 });
                 const json = await response.json();
                 const bytes = base64ToArrayBuffer(json.buffer);
-                setImage(bufferToFile(imageKey, bytes, json.contentType));
+                const file = bufferToFile(imageKey, bytes, json.contentType);
+                setImage(file);
+                setFileName(file.name);
             }
         }
         getImage();
@@ -53,17 +56,18 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
     }
 
     const blobToFile = (fileName: string, blob: Blob): File => {
-        const file = new File([blob], fileName);
+        const newFileName = fileName.replace(/\.[^/.]+$/, "");
+        const file = new File([blob], `${newFileName}-${uuidv4()}`);
         return file;
     }
 
     const saveImage = async (blob: Blob) => {
         if (image) {
-            const file = blobToFile(`${image.name}-${uuidv4()}`, blob);
+            const newFileName = fileName ? fileName : image.name;
+            const file = blobToFile(newFileName, blob);
             const data = new FormData();
             data.append('object', file);
-            data.append('key', file.name);
-            data.append('username', userName);
+            data.append('key', newFileName);
 
             const results = await fetch(`api/upload/${bucketName}`, {
                 method: 'POST',
@@ -80,15 +84,17 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
         image ?
         <div>
             <ReactPainter
-                width={500}
-                height={500}
+                width={800}
+                height={800}
                 onSave={blob => { return saveImage(blob); }}
                 image={image}
-                render={({ canvas, triggerSave }) => (
+                render={({ canvas, triggerSave, setColor, setLineWidth }) => (
                     <div>
+                        Name: <input type="text" style={{width:"400px"}} value={fileName} onChange={e => setFileName(e.target.value)}/>&nbsp;&nbsp;
+                        <button onClick={triggerSave}>Save</button> { saved && <div>Saved!</div> } <br/>
+                        Choose a Color: <input type="color" onChange={e => setColor(e.target.value)} />&nbsp;&nbsp;
+                        Set Line Width: <input type="number" onChange={e => setLineWidth(parseInt(e.target.value))} />
                         <div className="awesomeContainer">{canvas}</div>
-                        <button onClick={triggerSave}>Save</button>
-                        { saved && <div>Saved!</div> }
                     </div>
                 )}
             />

@@ -11,11 +11,13 @@ function App() {
 	const [ profile, setProfile ] = useState<GoogleLoginResponse["profileObj"] | null>(null);
 	const [ image, setImage ] = useState<File | null>(null);
 	const [ refreshObjects, setRefreshObjects ] = useState<boolean>(false);
+	const authClientId = process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID;
+	const bucketName = process.env.REACT_APP_BUCKET_NAME;
 
 	useEffect(() => {
 		const initClient = () => {
 			gapi.client.init({
-				clientId: process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID,
+				clientId: authClientId,
 				scope: ''
 			});
 		};
@@ -41,10 +43,10 @@ function App() {
 		<div>
 			{profile ? 
 			<div>
-				<h1>Hello, {profile.name} <GoogleLogout clientId={`${process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID}`} buttonText="Log out" onLogoutSuccess={logOut} /></h1>
-				<ImageSelector bucketName="test-bucket" setImageKey={setImageKey} refreshObjects={refreshObjects}/>
-				<Upload image={image} setImage={setImage}/>
-				<ImageViewer bucketName="test-bucket" imageKey={imageKey} image={image} setImage={setImage} setRefreshObjects={setRefreshObjects} userName={profile.name}/>
+				<h1>Hello, {profile.name} <GoogleLogout clientId={authClientId!} buttonText="Log out" onLogoutSuccess={logOut} /></h1>
+				<ImageSelector bucketName={bucketName!} setImageKey={setImageKey} refreshObjects={refreshObjects}/>
+				<Upload setImage={setImage}/>
+				<ImageViewer bucketName={bucketName!} imageKey={imageKey} image={image} setImage={setImage} setRefreshObjects={setRefreshObjects} userName={profile.name}/>
 			</div> :
 			<div>
 				<h1>Please log in with Google</h1>
