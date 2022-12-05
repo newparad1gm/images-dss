@@ -9,6 +9,7 @@ import { ImageViewer } from './components/ImageViewer';
 function App() {
 	const [ imageKey, setImageKey ] = useState<string>();
 	const [ profile, setProfile ] = useState<GoogleLoginResponse["profileObj"] | null>(null);
+	const [ image, setImage ] = useState<File | null>(null);
 
 	useEffect(() => {
 		const initClient = () => {
@@ -39,21 +40,22 @@ function App() {
 		<div>
 			{profile ? 
 			<div>
-				<h1>Logged In</h1>
-				Hello {profile.name}
-				<GoogleLogout clientId={`${process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID}`} buttonText="Log out" onLogoutSuccess={logOut} />
+				<h1>Hello, {profile.name} <GoogleLogout clientId={`${process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID}`} buttonText="Log out" onLogoutSuccess={logOut} /></h1>
 				<ImageSelector bucketName="test-bucket" setImageKey={setImageKey}/>
-				<Upload bucketName="test-bucket"/>
-				<ImageViewer bucketName="test-bucket" imageKey={imageKey}/>
+				<Upload image={image} setImage={setImage}/>
+				<ImageViewer bucketName="test-bucket" imageKey={imageKey} image={image} setImage={setImage}/>
 			</div> :
-			<GoogleLogin
-				clientId={`${process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID}`}
-				buttonText="Sign in with Google"
-				onSuccess={onSuccess}
-				onFailure={onFailure}
-				cookiePolicy={'single_host_origin'}
-				isSignedIn={true}
-			/>
+			<div>
+				<h1>Please log in with Google</h1>
+				<GoogleLogin
+					clientId={`${process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID}`}
+					buttonText="Sign in with Google"
+					onSuccess={onSuccess}
+					onFailure={onFailure}
+					cookiePolicy={'single_host_origin'}
+					isSignedIn={true}
+				/>
+			</div>
 			}
 		</div>
 	);

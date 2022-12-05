@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,7 +35,7 @@ func UploadObject(c *gin.Context) {
 		LogAndSetError(c, err, "Error getting object from form")
 		return
 	}
-	key := fileHeader.Filename
+	key := c.PostForm("key")
 	log.Printf("Uploading file %s", key)
 	file, err := fileHeader.Open()
 	if err != nil {
@@ -49,37 +50,51 @@ func UploadObject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"uploaded": key})
 }
 
-func GetObjectBuffer(bucket string, key string) ([]byte, error) {
+func GetObjectFromS3(bucket string, key string) (*s3.GetObjectOutput, error) {
 	rawObject, err := s3client.GetObject(bucket, key)
 	if err != nil {
 		log.Printf("Error loading object key %s from bucket %s", key, bucket)
 		return nil, err
 	}
-	obj, err := ioutil.ReadAll(rawObject.Body)
+	return rawObject, nil
+}
+
+func GetObjectBuffer(obj *s3.GetObjectOutput) ([]byte, error) {
+	bytes, err := ioutil.ReadAll(obj.Body)
 	if err != nil {
-		log.Printf("Error reading object key %s from bucket %s", key, bucket)
+		log.Println("Error getting object buffer")
 		return nil, err
 	}
-	return obj, nil
+	return bytes, nil
 }
 
 func GetObject(c *gin.Context) {
 	bucket := c.Param("bucket")
 	key := c.Param("key")
-	obj, err := GetObjectBuffer(bucket, key)
+	obj, err := GetObjectFromS3(bucket, key)
 	if err != nil {
 		LogAndSetError(c, err, fmt.Sprintf("Error reading object key %s from bucket %s", key, bucket))
 		return
 	}
-	c.JSON(http.StatusCreated, obj)
+	bytes, err := GetObjectBuffer(obj)
+	if err != nil {
+		LogAndSetError(c, err, fmt.Sprintf("Error getting object buffer from %s", key))
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"buffer": bytes, "contentType": obj.ContentType})
 }
 
 func LoadImage(c *gin.Context) {
 	bucket := c.Param("bucket")
 	imageName := c.Param("image")
-	img, err := GetObjectBuffer(bucket, imageName)
+	obj, err := GetObjectFromS3(bucket, imageName)
 	if err != nil {
 		LogAndSetError(c, err, fmt.Sprintf("Error reading object key %s from bucket %s", imageName, bucket))
+		return
+	}
+	img, err := GetObjectBuffer(obj)
+	if err != nil {
+		LogAndSetError(c, err, fmt.Sprintf("Error getting object buffer from %s", imageName))
 		return
 	}
 	encoded := base64.StdEncoding.EncodeToString(img)

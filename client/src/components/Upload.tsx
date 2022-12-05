@@ -1,41 +1,28 @@
 import React, { useEffect, useState } from 'react';
 
 interface UploadProps {
-    bucketName: string;
+    image: File | null;
+    setImage: React.Dispatch<React.SetStateAction<File | null>>
 }
 
 export const Upload = (props: UploadProps): JSX.Element | null => {
-    const { bucketName } = props;
-    const [ selectedFile, setSelectedFile ] = useState<File>();
+    const { image, setImage } = props;
 
     const fileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
-            setSelectedFile(event.target.files[0]);
-        }
-    }
-
-    const uploadImage = () => {
-        if (selectedFile) {
-            const data = new FormData();
-            data.append('object', selectedFile);
-
-            return fetch(`api/upload/${bucketName}`, {
-                method: 'POST',
-                body: data
-            });
+            setImage(null);
+            setImage(event.target.files[0]);
         }
     }
 
     return (
         <div>
-            { selectedFile && (
+            <input type="file" name="image" onChange={fileSelect} title=" " />
+            { image && (
                 <div>
-                    File Name: {selectedFile.name}<br/>
-                    File Type: {selectedFile.type}
+                    File Name: {image.name}<br/>
                 </div>)
             }
-            <input type="file" name="image" onChange={fileSelect} />
-            <button onClick={uploadImage}>Upload</button>
         </div>
     )
 }
