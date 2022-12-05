@@ -10,6 +10,7 @@ function App() {
 	const [ imageKey, setImageKey ] = useState<string>();
 	const [ profile, setProfile ] = useState<GoogleLoginResponse["profileObj"] | null>(null);
 	const [ image, setImage ] = useState<File | null>(null);
+	const [ refreshObjects, setRefreshObjects ] = useState<boolean>(false);
 
 	useEffect(() => {
 		const initClient = () => {
@@ -41,9 +42,9 @@ function App() {
 			{profile ? 
 			<div>
 				<h1>Hello, {profile.name} <GoogleLogout clientId={`${process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID}`} buttonText="Log out" onLogoutSuccess={logOut} /></h1>
-				<ImageSelector bucketName="test-bucket" setImageKey={setImageKey}/>
+				<ImageSelector bucketName="test-bucket" setImageKey={setImageKey} refreshObjects={refreshObjects}/>
 				<Upload image={image} setImage={setImage}/>
-				<ImageViewer bucketName="test-bucket" imageKey={imageKey} image={image} setImage={setImage}/>
+				<ImageViewer bucketName="test-bucket" imageKey={imageKey} image={image} setImage={setImage} setRefreshObjects={setRefreshObjects} userName={profile.name}/>
 			</div> :
 			<div>
 				<h1>Please log in with Google</h1>

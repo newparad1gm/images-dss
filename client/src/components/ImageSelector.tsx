@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 interface ImageSelectorProps {
     bucketName: string;
     setImageKey: React.Dispatch<React.SetStateAction<string | undefined>>;
+    refreshObjects: boolean;
 }
 
 interface ImageEntryProps {
@@ -18,7 +19,7 @@ const ImageEntry = (props: ImageEntryProps): JSX.Element => {
 }
 
 export const ImageSelector = (props: ImageSelectorProps): JSX.Element | null => {
-    const { bucketName, setImageKey } = props;
+    const { bucketName, setImageKey, refreshObjects } = props;
 	const [ objects, setObjects ] = useState<{ Key: string, Size: number }[]>([]);
 
     useEffect(() => {
@@ -33,7 +34,7 @@ export const ImageSelector = (props: ImageSelectorProps): JSX.Element | null => 
             setObjects(json);
         }
         getObjects();
-    }, []);
+    }, [refreshObjects]);
 
     const selectImage = (obj: string | null) => {
         if (obj) {

@@ -6,11 +6,14 @@ interface ImageViewerProps {
     bucketName: string;
     imageKey?: string;
     image: File | null;
-    setImage: React.Dispatch<React.SetStateAction<File | null>>
+    setImage: React.Dispatch<React.SetStateAction<File | null>>;
+    setRefreshObjects: React.Dispatch<React.SetStateAction<boolean>>;
+    userName: string;
 }
 
 export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
-    const { bucketName, imageKey, image, setImage } = props;
+    const { bucketName, imageKey, image, setImage, setRefreshObjects, userName } = props;
+    const [ saved, setSaved ] = useState<boolean>(false);
 
     useEffect(() => {
         const getImage = async () => {
@@ -29,6 +32,10 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
         }
         getImage();
     }, [imageKey]);
+
+    useEffect(() => {
+        setSaved(false);
+    }, [image]);
 
     const base64ToArrayBuffer = (base64: string): Uint8Array => {
         const binaryString = window.atob(base64);
@@ -50,17 +57,22 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
         return file;
     }
 
-    const saveImage = (blob: Blob) => {
+    const saveImage = async (blob: Blob) => {
         if (image) {
             const file = blobToFile(`${image.name}-${uuidv4()}`, blob);
             const data = new FormData();
             data.append('object', file);
             data.append('key', file.name);
+            data.append('username', userName);
 
-            return fetch(`api/upload/${bucketName}`, {
+            const results = await fetch(`api/upload/${bucketName}`, {
                 method: 'POST',
                 body: data
             });
+            if (results.status === 200) {
+                setRefreshObjects(prevState => !prevState);
+                setSaved(true);
+            }
         }
     }
 
@@ -76,6 +88,7 @@ export const ImageViewer = (props: ImageViewerProps): JSX.Element | null => {
                     <div>
                         <div className="awesomeContainer">{canvas}</div>
                         <button onClick={triggerSave}>Save</button>
+                        { saved && <div>Saved!</div> }
                     </div>
                 )}
             />
