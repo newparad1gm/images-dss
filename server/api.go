@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -9,12 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func LogAndSetError(c *gin.Context, err error, errorStr string) {
+	log.Println(errorStr)
+	log.Println(err)
+	c.JSON(http.StatusBadGateway, gin.H{"error": errorStr})
+}
+
 func GetObjects(c *gin.Context) {
 	bucket := c.Param("bucket")
 	log.Printf("Getting objects from bucket %s", bucket)
 	objects, err := s3client.GetObjects(bucket)
 	if err != nil {
-		log.Printf("Error getting from bucket %s", bucket)
+		LogAndSetError(c, err, fmt.Sprintf("Error getting from bucket %s", bucket))
 		return
 	}
 	c.JSON(http.StatusCreated, objects)
@@ -24,19 +31,22 @@ func UploadObject(c *gin.Context) {
 	bucket := c.Param("bucket")
 	fileHeader, err := c.FormFile("object")
 	if err != nil {
-		log.Printf("Error getting object")
+		LogAndSetError(c, err, "Error getting object from form")
 		return
 	}
-	log.Printf("Uploading file %s", fileHeader.Filename)
+	key := fileHeader.Filename
+	log.Printf("Uploading file %s", key)
 	file, err := fileHeader.Open()
 	if err != nil {
-		log.Printf("Error opening %s", fileHeader.Filename)
+		LogAndSetError(c, err, fmt.Sprintf("Error opening %s", key))
 		return
 	}
-	err = s3client.PutObject(bucket, fileHeader.Filename, fileHeader.Size, file)
+	err = s3client.PutObject(bucket, key, fileHeader.Size, file)
 	if err != nil {
-		log.Printf("Error uploading to %s bucket %s", fileHeader.Filename, bucket)
+		LogAndSetError(c, err, fmt.Sprintf("Error uploading to %s bucket %s", key, bucket))
+		return
 	}
+	c.JSON(http.StatusOK, gin.H{"uploaded": key})
 }
 
 func GetObjectBuffer(bucket string, key string) ([]byte, error) {
@@ -58,7 +68,7 @@ func GetObject(c *gin.Context) {
 	key := c.Param("key")
 	obj, err := GetObjectBuffer(bucket, key)
 	if err != nil {
-		log.Printf("Error reading object key %s from bucket %s", key, bucket)
+		LogAndSetError(c, err, fmt.Sprintf("Error reading object key %s from bucket %s", key, bucket))
 		return
 	}
 	c.JSON(http.StatusCreated, obj)
@@ -69,7 +79,7 @@ func LoadImage(c *gin.Context) {
 	imageName := c.Param("image")
 	img, err := GetObjectBuffer(bucket, imageName)
 	if err != nil {
-		log.Printf("Error reading object key %s from bucket %s", imageName, bucket)
+		LogAndSetError(c, err, fmt.Sprintf("Error reading object key %s from bucket %s", imageName, bucket))
 		return
 	}
 	encoded := base64.StdEncoding.EncodeToString(img)
@@ -85,6 +95,5 @@ func SetupRouter(router *gin.Engine) {
 		api.GET("/objects/:bucket", GetObjects)
 		api.POST("/upload/:bucket", UploadObject)
 		api.GET("/get/:bucket/:key", GetObject)
-		api.GET("/load/:bucket/:image", LoadImage)
 	}
 }

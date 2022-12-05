@@ -14,7 +14,7 @@ function App() {
 		const initClient = () => {
 			gapi.client.init({
 				clientId: process.env.REACT_APP_GOOGLE_AUTH_CLIENT_ID,
-				scropt: ''
+				scope: ''
 			});
 		};
 		gapi.load('client:auth2', initClient);
@@ -37,6 +37,7 @@ function App() {
 
 	return (
 		<div>
+			REACT_APP_TEST: {process.env.REACT_APP_TEST}
 			{profile ? 
 			<div>
 				<h1>Logged In</h1>
